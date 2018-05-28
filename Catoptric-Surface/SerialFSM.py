@@ -23,15 +23,15 @@ class SerialFSM(object):
         self.currentState = 0
         #self.setupStates()
         self.stateDefs = {0 : self.getMagicNum,
-        1 : self.getKey,
-        2 : self.getNumCharHigh,
-        3 : self.getNumCharLow,
-        4 : self.getChar,
-        5 : self.getAckKey,
-        6 : self.getAckX,
-        7 : self.getAckY,
-        8 : self.getAckM,
-        9 : self.getNackKey}
+                        1 : self.getKey,
+                        2 : self.getNumCharHigh,
+                        3 : self.getNumCharLow,
+                        4 : self.getChar,
+                        5 : self.getAckKey,
+                        6 : self.getAckX,
+                        7 : self.getAckY,
+                        8 : self.getAckM,
+                        9 : self.getNackKey}
 
 
         self.ackX = 0

@@ -4,14 +4,15 @@ import csv
 import serial
 
 class CatoptricRow(object):
-	def __init__(self, rowNumber, serialCOM, numMirrors):
+	def __init__(self, rowNumber, numMirrors, serialPort):
 		self.rowNumber = rowNumber
 		self.numMirrors = numMirrors
-		self._setup(serialCOM)
+		
+		self._setup(serialPort)
 
 
-	def _setup(self, serialCOM):
-		self.serial = serial.Serial(serialCOM, 9600)
+	def _setup(self, serialPort):
+		self.serial = serial.Serial(serialPort, 9600)
 		time.sleep(2)
 		self.fsm = SerialFSM(self.rowNumber)
 
