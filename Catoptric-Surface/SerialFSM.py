@@ -32,8 +32,11 @@ class SerialFSM(object):
                         7 : self.getAckY,
                         8 : self.getAckM,
                         9 : self.getNackKey}
+        
+        self.resetVariables()
 
 
+    def resetVariables(self):
         self.ackX = 0
         self.ackY = 0
         self.ackM = 0
@@ -53,6 +56,7 @@ class SerialFSM(object):
 ##########
 
     def getMagicNum(self, c):
+        self.resetVariables()
         if (c == b'!'):
             return GET_KEY
         else:
@@ -94,6 +98,7 @@ class SerialFSM(object):
         c = ord( c )
         if (c <= 2):
             self.ackM = c
+            print("Mirror (%d, %d), Motor %d moved to new state" % (self.ackX, self.ackY, self.ackM))
             self.currentCommandsToArduino -= 1
             return GET_MAGIC_NUM
         else:

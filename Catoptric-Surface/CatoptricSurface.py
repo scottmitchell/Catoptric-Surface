@@ -3,6 +3,8 @@ from CatoptricRow import CatoptricRow
 import csv
 import serial
 import serial.tools.list_ports
+import os.path
+import time
 
 serialPortOrder = { "8543931323035121E170" : 1,
 					"8543931323035130C092" : 2,
@@ -28,9 +30,10 @@ class CatoptricSurface():
 	def __init__(self):
 		self.serialPorts = self.getOrderedSerialPorts()
 		self.numRows = len(self.serialPorts)
-		self.rowInterfaces = []
+		self.rowInterfaces = dict()
 
 		self.setupRowInterfaces()
+		self.reset() 
 
 
 	# Initializes a Row Interface for each available arduino
@@ -39,6 +42,7 @@ class CatoptricSurface():
 		for sP in self.serialPorts:
 			name = serialPortOrder[sP.serial_number]
 			port = sP.device
+
 			rowLength = 0
 			if (name >= 1 and name < 12):
 				rowLength = 16
@@ -51,7 +55,7 @@ class CatoptricSurface():
 
 			print ("Initializing Catoptric Row %d with %d mirrors" % (name, rowLength))
 
-			self.rowInterfaces.append(CatoptricRow(name, rowLength, port))
+			self.rowInterfaces[name] = CatoptricRow(name, rowLength, port)
 	
 
 	# Returns a list of serial ports, ordered according to the serialPortOrder dictionary
@@ -62,7 +66,7 @@ class CatoptricSurface():
 		
 		# Get only ports with arduinos attached
 		arduinoPorts = [p for p in allPorts if p.pid == 67]
-		print ("%d Arduinos Found" % len(arduinoPorts)) 
+		print ("\n%d Arduinos Found" % len(arduinoPorts)) 
 
 		# Sort arduino ports by row
 		try:
@@ -78,6 +82,52 @@ class CatoptricSurface():
 		print("\n")
 
 		return arduinoPorts
+	
+
+	def reset(self):
+		print ("\nResetting all mirrors to default position")
+
+
+	def getCSV(self, path):
+		# Deleta old CSV data
+		self.csvData  = []
+
+		# Read in CSV contents
+		with open(path, newline='') as csvfile:
+			reader = csv.reader(csvfile, delimiter=',')
+			for row in reader:
+				x = []
+				for i in range(0, len(row)):
+					x.append(row[i])
+				self.csvData.append(x)
+	
+
+	def updateByCSV(self, path):
+		self.getCSV(path)
+
+		for i in range(0, len(self.csvData)):
+			line = self.csvData[i]
+			if (int(line[0]) in self.rowInterfaces):
+				self.rowInterfaces[int(line[0])].reorientMirrorAxis(line)
+			else:
+				print("line %d of csv is addressed to a row that does not exist: %d" % (i, int(line[0])))
+
+		commandsOut = 0
+		for row in self.rowInterfaces:
+			commandsOut += self.rowInterfaces[row].getCurrentCommandsOut()
+		print (commandsOut)
+
+		while (commandsOut > 0):
+			for r in self.rowInterfaces:
+				self.rowInterfaces[r].checkIncoming()
+			commandsOut = 0
+			for row in self.rowInterfaces:
+				commandsOut += self.rowInterfaces[row].getCurrentCommandsOut()
+			#print ("Out = ", commandsOut)
+
+
+		
+
 
 
 
@@ -99,7 +149,7 @@ class CatoptricGUI():
 		print(self.e.get()) 
 
 
-class CatoptricController():
+class CatoptricControllerGUI():
 	def __init__(self):
 		self.root = Tk.Tk()
 		self.model = CatoptricSurface()
@@ -135,6 +185,26 @@ class CatoptricController():
 		for line in self.csvData:
 			if (int(line[0]) < self.model.numRows):
 				self.model.rowInterfaces[int(line[0])].stepMotor(line[1], line[2], line[3], line[4])
+
+
+class CatoptricController():
+	def __init__(self):
+		self.surface = CatoptricSurface()
+
+	def run(self):
+		while True:
+			c = input("\n'Reset' or enter path to orientation file:\n")
+
+			if (c.lower() == 'reset'):
+				self.surface.reset()
+			
+			if (os.path.exists(c)):
+				print ("\nUpdating mirrors with '%s'" % c)
+				self.surface.updateByCSV(c)
+			else:
+				print ("\nFile does not exist")
+
+
 
 
 if __name__ == '__main__':

@@ -7,7 +7,12 @@ class CatoptricRow(object):
 	def __init__(self, rowNumber, numMirrors, serialPort):
 		self.rowNumber = rowNumber
 		self.numMirrors = numMirrors
-		
+
+		self.motorStates = []
+		for i in range(numMirrors):
+			states = [0, 0]
+			self.motorStates.append(states)
+
 		self._setup(serialPort)
 
 
@@ -25,6 +30,7 @@ class CatoptricRow(object):
 			message = self.fsm.message
 			self.fsm.message = []
 			self.processMessage(message)
+			print(message)
 			return message
 		else:
 			return None
@@ -49,6 +55,7 @@ class CatoptricRow(object):
 		countHigh = (int(c) >> 8) & 255
 	    
 		message = [33, 65, self.rowNumber, y, m, d, countHigh, countLow]
+		print(message)
 		self.sendMessageToArduino(message)
 
 
@@ -61,5 +68,20 @@ class CatoptricRow(object):
 
 	def getCurrentCommandsOut(self):
 		return self.fsm.currentCommandsToArduino
+	
+
+	def reorientMirrorAxis(self, command):
+		mirror = int(command[1])
+		motor = int(command[2])
+		newState = int(command[3])
+		currentState = self.motorStates[mirror][motor]
+		
+		delta = newState - currentState
+		direction = 0
+		if (delta < 0):
+			direction = 1
+
+		self.stepMotor(mirror, motor, direction, abs(delta))
+		self.motorStates[mirror][motor] = newState
 
 

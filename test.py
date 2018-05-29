@@ -49,5 +49,5 @@ if __name__ == '__main__':
             print ("Arduino #%s : Unrecognized Serial Number" % a.serial_number)
 
     while True:
-        x = input()
+        x = input("Enter path to orientation file:\n")
         print (x)
