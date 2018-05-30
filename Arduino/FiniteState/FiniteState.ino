@@ -89,7 +89,7 @@ void nack(String message) {
   iHigh = len && 255;
 
   Serial.write(MAGIC_NUM);
-  Serial.write('c');
+  Serial.write('b');
   Serial.write(iHigh);
   Serial.write(iLow);
   for (int i = 0; i < len; i++) {
@@ -101,7 +101,7 @@ void nack(String message) {
 void setup() {
   // Initialize shields and motors
   for (int i = 0; i < NUM_ROWS; i++) {
-    AFMS[i] = Adafruit_MotorShield(i + 0x40);
+    AFMS[i] = Adafruit_MotorShield(i + 0x41);
     for (int j = 0; j < 2; j++) {
       motors[i][j] = AFMS[i].getStepper(200, (j+1));
     }

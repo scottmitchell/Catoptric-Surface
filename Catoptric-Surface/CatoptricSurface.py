@@ -45,7 +45,7 @@ class CatoptricSurface():
 
 			rowLength = 0
 			if (name >= 1 and name < 12):
-				rowLength = 16
+				rowLength = 10						### THIS SHOULD BE 16, NOT 10 ###
 			elif (name >= 12 and name < 17):
 				rowLength = 24
 			elif (name >= 17 and name < 28):
@@ -63,10 +63,11 @@ class CatoptricSurface():
 
 		# Get all serial ports
 		allPorts = serial.tools.list_ports.comports()
+		print(allPorts)
 		
 		# Get only ports with arduinos attached
 		arduinoPorts = [p for p in allPorts if p.pid == 67]
-		print ("\n%d Arduinos Found" % len(arduinoPorts)) 
+		print ("\n%d Arduinos Found:" % len(arduinoPorts)) 
 
 		# Sort arduino ports by row
 		try:
@@ -109,6 +110,9 @@ class CatoptricSurface():
 	def updateByCSV(self, path):
 		self.getCSV(path)
 
+		for r in self.rowInterfaces:
+			self.rowInterfaces[r].resetSerialBuffer()
+
 		for i in range(0, len(self.csvData)):
 			line = self.csvData[i]
 			if (int(line[0]) in self.rowInterfaces):
@@ -120,8 +124,9 @@ class CatoptricSurface():
 
 
 	def run(self):
-		commandsOut = 1
 
+		commandsOut = 1
+		updates = 0
 		while (commandsOut > 0):
 
 			for r in self.rowInterfaces:
@@ -131,13 +136,18 @@ class CatoptricSurface():
 			commandsQueue = 0
 			ackCount = 0
 			nackCount = 0
+			
 			for row in self.rowInterfaces:
 				commandsOut += self.rowInterfaces[row].getCurrentCommandsOut()
 				ackCount += self.rowInterfaces[row].getCurrentAckCount()
 				nackCount += self.rowInterfaces[row].getCurrentNackCount()
 				commandsQueue += self.rowInterfaces[row].commandQueue.qsize()
+			updates += 1
 
-			print ("%d commands out | %d commands in queue | %d acks | %d nacks" % (commandsOut, commandsQueue, ackCount, nackCount), end="\r")
+			print ("%d commands out | %d commands in queue | %d acks | %d nacks | %d cycles" % (commandsOut, commandsQueue, ackCount, nackCount, updates), end="\r")
+		for r in self.rowInterfaces:
+			self.rowInterfaces[r].fsm.ackCount = 0
+			self.rowInterfaces[r].fsm.nackCount = 0
 
 	
 

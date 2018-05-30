@@ -67,8 +67,10 @@ class SerialFSM(object):
     def getKey(self, c):
         if (c == b'a'):
             self.currentCommandsToArduino -= 1
+            self.ackCount += 1
             return GET_ACK_KEY
         elif (c == b'b'):
+            self.nackCount += 1
             return GET_NACK_KEY
         elif (c == b'c'):
             return GET_NUM_CHAR_HIGH
@@ -76,7 +78,7 @@ class SerialFSM(object):
             return GET_MAGIC_NUM
 
     def getAckKey(self, c):
-        self.ackCount += 1
+        
         if (c == b'A'):
             return GET_ACK_X
         else:
@@ -130,7 +132,7 @@ class SerialFSM(object):
             return GET_CHAR
 
     def getNackKey(self, c):
-        self.nackCount += 1
+        
         if (c == b'B'):
             #Process Nack
             return GET_MAGIC_NUM

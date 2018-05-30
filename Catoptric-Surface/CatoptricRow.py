@@ -29,14 +29,17 @@ class CatoptricRow(object):
 		self.serial.reset_output_buffer()
 		time.sleep(2)
 		self.fsm = SerialFSM(self.rowNumber)
+	
+	def resetSerialBuffer(self):
+		self.serial.reset_input_buffer()
+		self.serial.reset_output_buffer()
 
 	
 	def update(self):
 		self.checkIncoming()
-		if (self.getCurrentCommandsOut() < maxCommandsOut):
+		if (self.getCurrentCommandsOut() < maxCommandsOut and self.commandQueue.qsize() > 0):
 			message = self.commandQueue.get()
 			self.sendMessageToArduino(message)
-			#print(message, "   SENT")
 
 
 	def checkIncoming(self):
@@ -91,8 +94,8 @@ class CatoptricRow(object):
 
 	def reset(self):
 		for i in range(self.numMirrors):
-			self.stepMotor(i+1, 0, 1, 180)
-			self.stepMotor(i+1, 1, 1, 180)
+			self.stepMotor(i+1, 1, 0, 200)
+			self.stepMotor(i+1, 0, 0, 200)
 			self.motorStates[i][0] = 0
 			self.motorStates[i][1] = 0
 
