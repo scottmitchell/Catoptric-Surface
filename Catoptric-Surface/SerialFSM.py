@@ -19,6 +19,8 @@ class SerialFSM(object):
         self.name = name
         super(SerialFSM, self).__init__()
         self.currentCommandsToArduino = 0
+        self.nackCount = 0
+        self.ackCount = 0
 
         self.currentState = 0
         #self.setupStates()
@@ -64,6 +66,7 @@ class SerialFSM(object):
         
     def getKey(self, c):
         if (c == b'a'):
+            self.currentCommandsToArduino -= 1
             return GET_ACK_KEY
         elif (c == b'b'):
             return GET_NACK_KEY
@@ -73,6 +76,7 @@ class SerialFSM(object):
             return GET_MAGIC_NUM
 
     def getAckKey(self, c):
+        self.ackCount += 1
         if (c == b'A'):
             return GET_ACK_X
         else:
@@ -98,8 +102,8 @@ class SerialFSM(object):
         c = ord( c )
         if (c <= 2):
             self.ackM = c
-            print("Mirror (%d, %d), Motor %d moved to new state" % (self.ackX, self.ackY, self.ackM))
-            self.currentCommandsToArduino -= 1
+            #print("Mirror (%d, %d), Motor %d moved to new state" % (self.ackX, self.ackY, self.ackM))
+            
             return GET_MAGIC_NUM
         else:
             return GET_MAGIC_NUM
@@ -126,6 +130,7 @@ class SerialFSM(object):
             return GET_CHAR
 
     def getNackKey(self, c):
+        self.nackCount += 1
         if (c == b'B'):
             #Process Nack
             return GET_MAGIC_NUM

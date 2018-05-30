@@ -86,6 +86,10 @@ class CatoptricSurface():
 
 	def reset(self):
 		print ("\nResetting all mirrors to default position")
+		for r in self.rowInterfaces:
+			self.rowInterfaces[r].reset()
+		
+		self.run()
 
 
 	def getCSV(self, path):
@@ -111,82 +115,36 @@ class CatoptricSurface():
 				self.rowInterfaces[int(line[0])].reorientMirrorAxis(line)
 			else:
 				print("line %d of csv is addressed to a row that does not exist: %d" % (i, int(line[0])))
+		
+		self.run()
 
-		commandsOut = 0
-		for row in self.rowInterfaces:
-			commandsOut += self.rowInterfaces[row].getCurrentCommandsOut()
-		print (commandsOut)
+
+	def run(self):
+		commandsOut = 1
 
 		while (commandsOut > 0):
+
 			for r in self.rowInterfaces:
-				self.rowInterfaces[r].checkIncoming()
+				self.rowInterfaces[r].update()
+
 			commandsOut = 0
+			commandsQueue = 0
+			ackCount = 0
+			nackCount = 0
 			for row in self.rowInterfaces:
 				commandsOut += self.rowInterfaces[row].getCurrentCommandsOut()
-			#print ("Out = ", commandsOut)
+				ackCount += self.rowInterfaces[row].getCurrentAckCount()
+				nackCount += self.rowInterfaces[row].getCurrentNackCount()
+				commandsQueue += self.rowInterfaces[row].commandQueue.qsize()
+
+			print ("%d commands out | %d commands in queue | %d acks | %d nacks" % (commandsOut, commandsQueue, ackCount, nackCount), end="\r")
+
+	
+
+			
 
 
 		
-
-
-
-
-
-
-
-
-class CatoptricGUI():
-	def __init__(self, master):
-		self.e = Tk.Entry(master)
-		self.e.pack()
-		self.e.focus_set()
-		self.loadButton = Tk.Button(master, text="Load", width=10)
-		self.loadButton.pack()
-		self.runButton = Tk.Button(master, text="Run", width=10)
-		self.runButton.pack()
-
-	def loadCSV(self):
-		print(self.e.get()) 
-
-
-class CatoptricControllerGUI():
-	def __init__(self):
-		self.root = Tk.Tk()
-		self.model = CatoptricSurface()
-		self.view = CatoptricGUI(self.root)
-
-		self.csvData = []
-
-		self.view.loadButton.bind("<Button>", self.getCSV)
-		self.view.runButton.bind("<Button>", self.runCSV)
-
-	def run(self):
-		self.root.title("Catoptric Surface Controller")
-		self.root.deiconify()
-		self.root.mainloop()
-
-	def getCSV(self, event):
-		# Deleta old CSV data
-		self.csvData  = []
-
-		# Get CSV path from entry field
-		csvPath = self.view.e.get()
-
-		# Read in CSV contents
-		with open(csvPath, newline='') as csvfile:
-			reader = csv.reader(csvfile, delimiter=',')
-			for row in reader:
-				x = []
-				for i in range(0, len(row)):
-					x.append(row[i])
-				self.csvData.append(x)
-
-	def runCSV(self, event):
-		for line in self.csvData:
-			if (int(line[0]) < self.model.numRows):
-				self.model.rowInterfaces[int(line[0])].stepMotor(line[1], line[2], line[3], line[4])
-
-
 class CatoptricController():
 	def __init__(self):
 		self.surface = CatoptricSurface()

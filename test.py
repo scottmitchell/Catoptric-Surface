@@ -51,3 +51,5 @@ if __name__ == '__main__':
     while True:
         x = input("Enter path to orientation file:\n")
         print (x)
+
+    c = Queue()

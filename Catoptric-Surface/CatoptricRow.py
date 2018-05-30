@@ -2,24 +2,41 @@ from SerialFSM import SerialFSM
 import time
 import csv
 import serial
+from queue import Queue
+
+maxCommandsOut = 2
 
 class CatoptricRow(object):
 	def __init__(self, rowNumber, numMirrors, serialPort):
 		self.rowNumber = rowNumber
 		self.numMirrors = numMirrors
+		self.commandQueue = Queue()
+		
 
+		# Init Motor States
 		self.motorStates = []
 		for i in range(numMirrors):
 			states = [0, 0]
 			self.motorStates.append(states)
 
+		# Setup Serial
 		self._setup(serialPort)
 
 
 	def _setup(self, serialPort):
 		self.serial = serial.Serial(serialPort, 9600)
+		self.serial.reset_input_buffer()
+		self.serial.reset_output_buffer()
 		time.sleep(2)
 		self.fsm = SerialFSM(self.rowNumber)
+
+	
+	def update(self):
+		self.checkIncoming()
+		if (self.getCurrentCommandsOut() < maxCommandsOut):
+			message = self.commandQueue.get()
+			self.sendMessageToArduino(message)
+			#print(message, "   SENT")
 
 
 	def checkIncoming(self):
@@ -29,24 +46,7 @@ class CatoptricRow(object):
 		if self.fsm.messageReady:
 			message = self.fsm.message
 			self.fsm.message = []
-			self.processMessage(message)
 			print(message)
-			return message
-		else:
-			return None
-
-
-	def updatePositionByCSV(self, csvPath):
-		#Read csv data
-		with open(csvPath, newline='') as csvfile:
-			reader = csv.reader(csvfile, delimiter=',')
-
-			for row in reader:
-				x = []
-				for i in range(0, len(row)):
-					x.append(row[i])
-				if (int(x[0]) == int(self.rowNumber)):
-					self.stepMotor(x[1], x[2], x[3], x[4])
 
 
 	def stepMotor(self, y, m, d, c):
@@ -55,8 +55,7 @@ class CatoptricRow(object):
 		countHigh = (int(c) >> 8) & 255
 	    
 		message = [33, 65, self.rowNumber, y, m, d, countHigh, countLow]
-		print(message)
-		self.sendMessageToArduino(message)
+		self.commandQueue.put(message)
 
 
 	def sendMessageToArduino(self, message):
@@ -68,6 +67,12 @@ class CatoptricRow(object):
 
 	def getCurrentCommandsOut(self):
 		return self.fsm.currentCommandsToArduino
+
+	def getCurrentNackCount(self):
+		return self.fsm.nackCount
+
+	def getCurrentAckCount(self):
+		return self.fsm.ackCount
 	
 
 	def reorientMirrorAxis(self, command):
@@ -83,5 +88,12 @@ class CatoptricRow(object):
 
 		self.stepMotor(mirror, motor, direction, abs(delta))
 		self.motorStates[mirror][motor] = newState
+
+	def reset(self):
+		for i in range(self.numMirrors):
+			self.stepMotor(i+1, 0, 1, 180)
+			self.stepMotor(i+1, 1, 1, 180)
+			self.motorStates[i][0] = 0
+			self.motorStates[i][1] = 0
 
 

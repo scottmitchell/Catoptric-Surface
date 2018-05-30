@@ -192,7 +192,6 @@ void loop() {
         int count = (countHigh << 8) + c; 
 
         stepMotor(x, y, m, d, count);
-        ackA(x, y, m);
         
         nextState = GET_MAGIC_NUM;
         break;
