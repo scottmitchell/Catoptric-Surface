@@ -36,7 +36,8 @@ class CatoptricRow(object):
 
 	
 	def update(self):
-		self.checkIncoming()
+		while (self.serial.in_waiting >= 1):
+			self.checkIncoming()
 		if (self.getCurrentCommandsOut() < maxCommandsOut and self.commandQueue.qsize() > 0):
 			message = self.commandQueue.get()
 			self.sendMessageToArduino(message)

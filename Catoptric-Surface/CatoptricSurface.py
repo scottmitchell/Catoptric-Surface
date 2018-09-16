@@ -2,8 +2,10 @@ from CatoptricRow import CatoptricRow
 import csv
 import serial
 import serial.tools.list_ports
-import os.path
+import os, os.path
 import time
+import sys
+from utility import bcolors
 
 serialPortOrder = { "8543931323035121E170" : 1,
 					"8543931323035130C092" : 2,
@@ -55,7 +57,7 @@ class CatoptricSurface():
 			else: #Test setup arduinos
 				rowLength = 2
 
-			print ("Initializing Catoptric Row %d with %d mirrors" % (name, rowLength))
+			print (" -- Initializing Catoptric Row %d with %d mirrors" % (name, rowLength))
 
 			self.rowInterfaces[name] = CatoptricRow(name, rowLength, port)
 	
@@ -65,30 +67,29 @@ class CatoptricSurface():
 
 		# Get all serial ports
 		allPorts = serial.tools.list_ports.comports()
-		print(allPorts)
+		#print(allPorts)
 		
 		# Get only ports with arduinos attached
 		arduinoPorts = [p for p in allPorts if p.pid == 67]
-		print ("\n%d Arduinos Found:" % len(arduinoPorts)) 
+		print (" -- %d Arduinos Found:" % len(arduinoPorts)) 
 
 		# Sort arduino ports by row
 		try:
 			arduinoPorts.sort(key= lambda x: serialPortOrder[x.serial_number])
 		except:
-			print("One or more arduino serial number unrecognized")
+			print(" -- One or more arduino serial number unrecognized")
         
 		for a in arduinoPorts:
 			try:
-				print ("Arduino #%s : Row #%d" % (a.serial_number, serialPortOrder[a.serial_number]))
+				print ("    Arduino #%s : Row #%d" % (a.serial_number, serialPortOrder[a.serial_number]))
 			except:
-				print ("Arduino #%s : Unrecognized Serial Number" % a.serial_number)
-		print("\n")
+				print ("    Arduino #%s : Unrecognized Serial Number" % a.serial_number)
 
 		return arduinoPorts
 	
 
 	def reset(self):
-		print ("\nResetting all mirrors to default position")
+		print (" -- Resetting all mirrors to default position")
 		for r in self.rowInterfaces:
 			self.rowInterfaces[r].reset()
 		
@@ -96,7 +97,7 @@ class CatoptricSurface():
 
 
 	def getCSV(self, path):
-		# Deleta old CSV data
+		# Delete old CSV data
 		self.csvData  = []
 
 		# Read in CSV contents
@@ -126,6 +127,7 @@ class CatoptricSurface():
 
 
 	def run(self):
+		print ("\n")
 
 		commandsOut = 1
 		updates = 0
@@ -145,11 +147,15 @@ class CatoptricSurface():
 				nackCount += self.rowInterfaces[row].getCurrentNackCount()
 				commandsQueue += self.rowInterfaces[row].commandQueue.qsize()
 			updates += 1
+			time.sleep(1)
 
-			#print ("%d commands out | %d commands in queue | %d acks | %d nacks | %d cycles \r" % (commandsOut, commandsQueue, ackCount, nackCount, updates))
+			sys.stdout.write("\r%d commands out | %d commands in queue | %d acks | %d nacks | %d cycles \r" % (commandsOut, commandsQueue, ackCount, nackCount, updates))
+		
 		for r in self.rowInterfaces:
 			self.rowInterfaces[r].fsm.ackCount = 0
 			self.rowInterfaces[r].fsm.nackCount = 0
+
+		print ("\n")
 
 	
 
@@ -161,18 +167,47 @@ class CatoptricController():
 	def __init__(self):
 		self.surface = CatoptricSurface()
 
+	def checkForNewCSV(self):
+		directory = 'csv/new'
+		newCSVs = [os.path.join(directory, name) for name in os.listdir(directory) 
+			if os.path.isfile(os.path.join(directory, name)) 
+			and name.endswith('.csv')]
+		return newCSVs
+
+
 	def run(self):
 		while True:
-			c = input("\n'Reset' or enter path to orientation file:\n")
+			print ("\n-------------------------\n")
+			csv = ""
+			csvList = self.checkForNewCSV()
+			inputMessage = bcolors.WARNING + "'Reset' mirrors or upload a file to run: " + bcolors.ENDC
+			
+			if (len(csvList) > 0):
+				csv = csvList[0] #This could be more intelligent
+				print (" -- Found csv file '%s'\n" % os.path.basename(csv))
+				inputMessage = bcolors.WARNING + "'Reset' mirrors or 'Run' file: " + bcolors.ENDC
+
+			c = input(inputMessage)
+			print ("\n")
 
 			if (c.lower() == 'reset'):
 				self.surface.reset()
-			
-			if (os.path.exists(c)):
-				print ("\nUpdating mirrors with '%s'" % c)
-				self.surface.updateByCSV(c)
-			else:
-				print ("\nFile does not exist")
+				print (" -- Reset Complete")
+
+			elif (len(csvList) > 0 and c.lower() == 'run'):
+				fileName = os.path.basename(csv)
+				print (" -- Running '%s'" % fileName)
+
+				self.surface.updateByCSV(csv)
+				print (" -- '%s' ran successfully" % fileName)
+
+				archiveLength = len([name for name in os.listdir('./csv/archive')])
+				newName = './csv/archive/' + str(archiveLength) + "_" + fileName
+				os.rename(csv, newName)
+				print (" -- '%s' moved to archive" % fileName)
+
+
+				
 
 
 
