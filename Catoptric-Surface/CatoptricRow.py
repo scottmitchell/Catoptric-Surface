@@ -90,7 +90,7 @@ class CatoptricRow(object):
 			direction = 1
 
 		self.stepMotor(mirror, motor, direction, abs(delta))
-		self.motorStates[mirror-1][motor] = newState
+		self.motorStates[mirror][motor] = newState
 
 	def reset(self):
 		for i in range(self.numMirrors):

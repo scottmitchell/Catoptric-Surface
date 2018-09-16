@@ -23,7 +23,7 @@ serialPortOrder = { "8543931323035121E170" : 1,
 					"85436323631351300201" : 14,
 					"75435353934351E07072" : 15,
 					"8543931323035170D0C2" : 16,
-					"854393133303518072A1" : 33,
+					"854393133303518072A1" : 3,
 				}
 
 
@@ -180,12 +180,12 @@ class CatoptricController():
 			print ("\n-------------------------\n")
 			csv = ""
 			csvList = self.checkForNewCSV()
-			inputMessage = bcolors.WARNING + "'Reset' mirrors or upload a file to run: " + bcolors.ENDC
+			inputMessage = bcolors.OKBLUE + "'Reset' mirrors or upload a file to run: " + bcolors.ENDC
 			
 			if (len(csvList) > 0):
 				csv = csvList[0] #This could be more intelligent
 				print (" -- Found csv file '%s'\n" % os.path.basename(csv))
-				inputMessage = bcolors.WARNING + "'Reset' mirrors or 'Run' file: " + bcolors.ENDC
+				inputMessage = bcolors.OKBLUE + "'Reset' mirrors or 'Run' file: " + bcolors.ENDC
 
 			c = input(inputMessage)
 			print ("\n")
