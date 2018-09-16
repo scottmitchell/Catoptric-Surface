@@ -15,3 +15,4 @@ This repo contains code for controlling the prototype **Catoptric Surface**, an 
 - cd Catoptric-Surface
 - python CatoptricSurface.py
 
+scp -P 2222 csvTest.csv cat@10.0.0.9:~/repos/Catoptric-Surface/Catoptric-Surface/csv/new
