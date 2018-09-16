@@ -10,5 +10,8 @@ This repo contains code for controlling the prototype **Catoptric Surface**, an 
 - Make sure you have X installed (https://www.xquartz.org/)
 - Connect to wustl wifi
 - Open terminal
-- 
+- Navigate to the Catoptric folder
+- source catoptric_ve/bin/activate
+- cd Catoptric-Surface
+- python CatoptricSurface.py
 

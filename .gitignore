@@ -1,2 +1,9 @@
 **/catoptric_ve
 **/__pycache__
+
+
+Catoptric-Surface/csv/new/*
+!Catoptric-Surface/csv/new/.gitkeep
+
+Catoptric-Surface/csv/archive/*
+!Catoptric-Surface/csv/archive/.gitkeep

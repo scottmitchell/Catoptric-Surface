@@ -76,7 +76,6 @@ class CatoptricRow(object):
 
 	def getCurrentAckCount(self):
 		return self.fsm.ackCount
-	
 
 	def reorientMirrorAxis(self, command):
 		mirror = int(command[1])

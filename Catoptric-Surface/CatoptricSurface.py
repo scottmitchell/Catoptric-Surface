@@ -1,4 +1,3 @@
-import tkinter as Tk
 from CatoptricRow import CatoptricRow
 import csv
 import serial
@@ -21,7 +20,8 @@ serialPortOrder = { "8543931323035121E170" : 1,
 					"85439303133351716221" : 13,
 					"85436323631351300201" : 14,
 					"75435353934351E07072" : 15,
-					"8543931323035170D0C2" : 16 
+					"8543931323035170D0C2" : 16,
+					"854393133303518072A1" : 33,
 				}
 
 
@@ -45,13 +45,15 @@ class CatoptricSurface():
 
 			rowLength = 0
 			if (name >= 1 and name < 12):
-				rowLength = 10						### THIS SHOULD BE 16, NOT 10 ###
+				rowLength = 16						### THIS SHOULD BE 16, NOT 10 ###
 			elif (name >= 12 and name < 17):
 				rowLength = 24
 			elif (name >= 17 and name < 28):
 				rowLength = 17
 			elif (name >= 28 and name < 33):
 				rowLength = 25
+			else: #Test setup arduinos
+				rowLength = 2
 
 			print ("Initializing Catoptric Row %d with %d mirrors" % (name, rowLength))
 
@@ -144,7 +146,7 @@ class CatoptricSurface():
 				commandsQueue += self.rowInterfaces[row].commandQueue.qsize()
 			updates += 1
 
-			print ("%d commands out | %d commands in queue | %d acks | %d nacks | %d cycles" % (commandsOut, commandsQueue, ackCount, nackCount, updates), end="\r")
+			#print ("%d commands out | %d commands in queue | %d acks | %d nacks | %d cycles \r" % (commandsOut, commandsQueue, ackCount, nackCount, updates))
 		for r in self.rowInterfaces:
 			self.rowInterfaces[r].fsm.ackCount = 0
 			self.rowInterfaces[r].fsm.nackCount = 0

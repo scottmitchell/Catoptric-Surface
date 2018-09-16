@@ -3,7 +3,7 @@
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
 #define MAGIC_NUM 33
-#define NUM_ROWS 16
+#define NUM_ROWS 2
 
 #define GET_MAGIC_NUM 0
 #define GET_KEY 1
@@ -39,10 +39,10 @@ int countHigh;
 // by a particular number of steps (d, c)
 void stepMotor(int x, int y, int m, int d, int count) {
   int dir = d+1;
-  motors[y][m]->setSpeed(100); 
-  motors[y][m]->step(count, dir, DOUBLE);
+  motors[y-1][m]->setSpeed(100); 
+  motors[y-1][m]->step(count, dir, DOUBLE);
   ackA(x, y, m);
-  motors[y][m]->release(); 
+  motors[y-1][m]->release(); 
 }
 
 
@@ -99,17 +99,21 @@ void nack(String message) {
 
 
 void setup() {
+  // Open serial connection
+  Serial.begin(9600);
+  
+  Serial.println("Test");
   // Initialize shields and motors
   for (int i = 0; i < NUM_ROWS; i++) {
-    AFMS[i] = Adafruit_MotorShield(i + 0x41);
+    AFMS[i] = Adafruit_MotorShield(i + 0x40);
     for (int j = 0; j < 2; j++) {
       motors[i][j] = AFMS[i].getStepper(200, (j+1));
     }
     AFMS[i].begin();
   }
+  Serial.println("Test2");
   
-  // Open serial connection
-  Serial.begin(9600);
+  
   pinMode(13, OUTPUT);
 }
 
@@ -139,7 +143,7 @@ void loop() {
         break;
 
       case GET_X:
-        if (c <= 32) {
+        if (c <= 50) {
           x = c;
           nextState = GET_Y;
         }
