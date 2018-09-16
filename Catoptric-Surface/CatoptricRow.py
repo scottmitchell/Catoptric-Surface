@@ -14,10 +14,10 @@ class CatoptricRow(object):
 		
 
 		# Init Motor States
-		self.motorStates = []
+		self.motorStates = dict()
 		for i in range(numMirrors):
 			states = [0, 0]
-			self.motorStates.append(states)
+			self.motorStates[i] = states
 
 		# Setup Serial
 		self._setup(serialPort)
@@ -82,7 +82,7 @@ class CatoptricRow(object):
 		mirror = int(command[1])
 		motor = int(command[2])
 		newState = int(command[3])
-		currentState = self.motorStates[mirror][motor]
+		currentState = self.motorStates[mirror-1][motor]
 		
 		delta = newState - currentState
 		direction = 0
@@ -90,7 +90,7 @@ class CatoptricRow(object):
 			direction = 1
 
 		self.stepMotor(mirror, motor, direction, abs(delta))
-		self.motorStates[mirror][motor] = newState
+		self.motorStates[mirror-1][motor] = newState
 
 	def reset(self):
 		for i in range(self.numMirrors):
