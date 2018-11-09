@@ -132,9 +132,8 @@ class SerialFSM(object):
             return GET_CHAR
 
     def getNackKey(self, c):
-        
         if (c == b'B'):
-            #Process Nack
+            #TODO - Process Nack
             return GET_MAGIC_NUM
         else:
             return GET_MAGIC_NUM
