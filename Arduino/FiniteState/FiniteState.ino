@@ -102,16 +102,23 @@ void setup() {
   // Open serial connection
   Serial.begin(9600);
   
-  Serial.println("Test");
+  Serial.println("Beginning to Initialize Shields and Motors");
   // Initialize shields and motors
   for (int i = 0; i < NUM_ROWS; i++) {
     AFMS[i] = Adafruit_MotorShield(i + 0x40);
     for (int j = 0; j < 2; j++) {
       motors[i][j] = AFMS[i].getStepper(200, (j+1));
+      if (motors[i][j] == NULL) {
+        Serial.print("Unable to initialize stepper at row ");
+        Serial.print(i+1); // TODO: Do we zero index these?
+        Serial.print(" position ");
+        Serial.println(j+1); // TODO: Do we zero index these?
+        // TODO: Maybe we send a nack here or some other type of issue message?
+      }
     }
     AFMS[i].begin();
   }
-  Serial.println("Test2");
+  Serial.println("Finished Initializing Shields and Motors");
   
   
   pinMode(13, OUTPUT);

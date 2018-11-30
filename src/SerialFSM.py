@@ -132,8 +132,14 @@ class SerialFSM(object):
             return GET_CHAR
 
     def getNackKey(self, c):
-        if (c == b'B'):
+        if (c == b'B'):  #Why is this an uppercase B?
             #TODO - Process Nack
+            #getNumCharHigh
+            #getNumCharLOW
+            #for loop that executes num times
+                #getChar each time
+                #add to string
+            #print string
             return GET_MAGIC_NUM
         else:
             return GET_MAGIC_NUM
