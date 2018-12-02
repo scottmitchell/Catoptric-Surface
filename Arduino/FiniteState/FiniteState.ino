@@ -3,7 +3,7 @@
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
 #define MAGIC_NUM 33
-#define NUM_ROWS 2
+#define NUM_COLS 2 // why is this two?
 
 #define GET_MAGIC_NUM 0
 #define GET_KEY 1
@@ -19,8 +19,8 @@
 //Adafruit_StepperMotor *myMotor2 = AFMS.getStepper(200, 2);
 
 
-Adafruit_MotorShield AFMS[NUM_ROWS];
-Adafruit_StepperMotor *motors[NUM_ROWS][2];
+Adafruit_MotorShield AFMS[NUM_COLS];
+Adafruit_StepperMotor *motors[NUM_COLS][2];
 
 int currentState = GET_MAGIC_NUM;
 //int key = 0;
@@ -55,27 +55,6 @@ void ackA(int x, int y, int m) {
   Serial.write(m);
 }
 
-/*
-void debug(String message) {
-  String prefix = "DEBUG: ";
-  message = prefix + message;
-  
-  unsigned int len = message.length();
-  unsigned int iLow;
-  unsigned int iHigh;
-
-  iHigh = (len >> 8) && 255;
-  iLow = len;
-
-  Serial.write(MAGIC_NUM);
-  Serial.write('c');
-  Serial.write(iHigh);
-  Serial.write(iLow);
-  for (int i = 0; i < len; i++) {
-    Serial.write(message.charAt(i));
-  }
-}*/
-
 
 void nack(String message) { 
   String prefix = "Nack: ";
@@ -97,6 +76,26 @@ void nack(String message) {
   }
 }
 
+void debug(String message) {
+  String prefix = "Debug: ";
+  message = prefix + message;
+
+  int len = message.length();
+  int iLow;
+  int iHigh;
+
+  iLow = (len >> 8) && 255;
+  iHigh = len && 255;
+
+  Serial.write(MAGIC_NUM);
+  Serial.write('c');
+  Serial.write(iHigh);
+  Serial.write(iLow);
+  for (int i = 0; i < len; i++) {
+    Serial.write(message.charAt(i));
+  }
+}
+
 
 void setup() {
   // Open serial connection
@@ -104,16 +103,26 @@ void setup() {
   
   Serial.println("Beginning to Initialize Shields and Motors");
   // Initialize shields and motors
-  for (int i = 0; i < NUM_ROWS; i++) {
+  for (int i = 0; i < NUM_COLS; i++) {
+    debug("Initializing motor shield at column " + (i+1));
     AFMS[i] = Adafruit_MotorShield(i + 0x40);
+//    if (!AFMS[i]) {
+//      Serial.print("Unable to initialize motor shield at column ");
+//      Serial.println(i+1);
+//      debug("Unable to initialize motor shield at column " + (i+1));
+//    }
     for (int j = 0; j < 2; j++) {
       motors[i][j] = AFMS[i].getStepper(200, (j+1));
       if (motors[i][j] == NULL) {
-        Serial.print("Unable to initialize stepper at row ");
-        Serial.print(i+1); // TODO: Do we zero index these?
+        Serial.print("Unable to initialize stepper at column ");
+        Serial.print(i+1);
         Serial.print(" position ");
-        Serial.println(j+1); // TODO: Do we zero index these?
-        // TODO: Maybe we send a nack here or some other type of issue message?
+        Serial.println(j+1);
+        String message = "Unable to initialize stepper at column ";
+        message.concat(i+1);
+        message.concat(" position ");
+        message.concat(j+1);
+        debug(message);
       }
     }
     AFMS[i].begin();
@@ -161,7 +170,7 @@ void loop() {
         break;
 
       case GET_Y:
-        if (c <= NUM_ROWS) {
+        if (c <= NUM_COLS) {
           y = c;
           nextState = GET_M;
         }

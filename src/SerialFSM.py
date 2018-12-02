@@ -12,7 +12,6 @@ GET_ACK_KEY = 5
 GET_ACK_X = 6
 GET_ACK_Y = 7
 GET_ACK_M = 8
-GET_NACK_KEY = 9
 
 class SerialFSM(object):
     def __init__(self, name):
@@ -24,7 +23,8 @@ class SerialFSM(object):
 
         self.currentState = 0
         #self.setupStates()
-        self.stateDefs = {0 : self.getMagicNum,
+        self.stateDefs = {
+                        0 : self.getMagicNum,
                         1 : self.getKey,
                         2 : self.getNumCharHigh,
                         3 : self.getNumCharLow,
@@ -33,10 +33,9 @@ class SerialFSM(object):
                         6 : self.getAckX,
                         7 : self.getAckY,
                         8 : self.getAckM,
-                        9 : self.getNackKey}
+        }
         
         self.resetVariables()
-
 
     def resetVariables(self):
         self.ackX = 0
@@ -48,10 +47,8 @@ class SerialFSM(object):
         self.message = []
         self.messageReady = False
 
-
     def Execute(self, c):
         self.currentState = self.stateDefs[self.currentState](c)
-
 
 ##########
 # STATES #
@@ -71,7 +68,7 @@ class SerialFSM(object):
             return GET_ACK_KEY
         elif (c == b'b'):
             self.nackCount += 1
-            return GET_NACK_KEY
+            return GET_NUM_CHAR_HIGH
         elif (c == b'c'):
             return GET_NUM_CHAR_HIGH
         else:
@@ -125,22 +122,8 @@ class SerialFSM(object):
             self.message.append(chr(ord(c)))
             self.messageReady = True
             return GET_MAGIC_NUM
-        
         else:
             self.message.append(chr(ord(c)))
             self.count -= 1
             return GET_CHAR
-
-    def getNackKey(self, c):
-        if (c == b'B'):  #Why is this an uppercase B?
-            #TODO - Process Nack
-            #getNumCharHigh
-            #getNumCharLOW
-            #for loop that executes num times
-                #getChar each time
-                #add to string
-            #print string
-            return GET_MAGIC_NUM
-        else:
-            return GET_MAGIC_NUM
 
